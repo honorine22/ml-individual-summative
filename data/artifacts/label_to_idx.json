@@ -1,0 +1,6 @@
+{
+  "electrical_fault": 0,
+  "fluid_leak": 1,
+  "mechanical_fault": 2,
+  "normal_operation": 3
+}

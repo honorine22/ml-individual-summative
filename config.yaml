@@ -1,0 +1,19 @@
+# FaultSense Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  url: "http://localhost:8000"
+
+streamlit:
+  host: "0.0.0.0"
+  port: 8501
+
+paths:
+  model_dir: "models"
+  data_dir: "data"
+  reports_dir: "reports"
+
+mlflow:
+  tracking_uri: "./mlruns"
+  experiment: "FaultSense"
+
