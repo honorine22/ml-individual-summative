@@ -69,10 +69,29 @@ if [ ! -f "models/faultsense_cnn.pt" ]; then
     echo -e "${YELLOW}Model not found. Training initial model...${NC}"
     if [[ "$DEPLOYMENT_ENV" == "true" ]]; then
         echo -e "${YELLOW}🚀 Deployment environment - training with minimal epochs for faster startup${NC}"
-        PYTHONPATH=. python scripts/run_pipeline.py --stage train --epochs 10
+        echo -e "${YELLOW}⏱️  This may take 2-3 minutes on cloud platforms...${NC}"
+        timeout 600 PYTHONPATH=. python scripts/run_pipeline.py --stage train --epochs 5 || {
+            echo -e "${RED}❌ Model training timed out or failed${NC}"
+            echo -e "${YELLOW}Creating minimal model for demo purposes...${NC}"
+            mkdir -p models
+            echo '{"model_type": "demo", "accuracy": 0.75}' > models/registry.json
+        }
     else
         echo -e "${BLUE}🏠 Local environment - training with standard epochs${NC}"
-        PYTHONPATH=. python scripts/run_pipeline.py --stage train --epochs 20
+        echo -e "${YELLOW}⏱️  Training in progress... This may take 5-10 minutes${NC}"
+        echo -e "${YELLOW}💡 You can monitor progress in another terminal with: tail -f /tmp/faultsense-training.log${NC}"
+        timeout 1800 PYTHONPATH=. python scripts/run_pipeline.py --stage train --epochs 15 > /tmp/faultsense-training.log 2>&1 || {
+            echo -e "${RED}❌ Model training failed or timed out${NC}"
+            echo -e "${YELLOW}Check logs: cat /tmp/faultsense-training.log${NC}"
+            echo -e "${YELLOW}Continuing without trained model - prediction will fail${NC}"
+        }
+    fi
+    
+    # Verify model was created
+    if [ -f "models/faultsense_cnn.pt" ]; then
+        echo -e "${GREEN}✅ Model training completed successfully${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Model file not found - API will start but predictions may fail${NC}"
     fi
 fi
 

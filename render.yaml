@@ -2,13 +2,18 @@ services:
   - type: web
     name: faultsense-api
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: DEPLOYMENT_ENV=true ./scripts/start.sh
+    plan: starter
+    buildCommand: |
+      pip install --upgrade pip
+      pip install --no-cache-dir -r requirements.txt
+    startCommand: DEPLOYMENT_ENV=true API_ONLY=true PYTHONPATH=. uvicorn src.api:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DEPLOYMENT_ENV
         value: "true"
       - key: API_ONLY
-        value: "false"  
+        value: "true"  
       - key: PYTHONPATH
         value: "."
+      - key: PYTHONUNBUFFERED
+        value: "1"
     healthCheckPath: /health
