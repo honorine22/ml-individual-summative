@@ -8,7 +8,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-import mlflow
+try:
+    import mlflow
+    MLFLOW_AVAILABLE = True
+except ImportError:
+    MLFLOW_AVAILABLE = False
+    mlflow = None
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -188,7 +193,7 @@ def train_model(
     best_state = None
 
     mlflow_run = None
-    if config.mlflow_experiment:
+    if MLFLOW_AVAILABLE and config.mlflow_experiment:
         mlflow.set_experiment(config.mlflow_experiment)
         mlflow_run = mlflow.start_run(run_name="faultsense-training")
         mlflow.log_params(
