@@ -48,8 +48,78 @@ class FaultSenseCNN(nn.Module):
         features = self.features(x)
         return self.classifier(features)
 
+def create_minimal_artifacts():
+    """Create minimal artifacts if missing."""
+    artifacts_dir = Path("data/artifacts")
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create label mapping
+    label_map = {
+        "electrical_fault": 0,
+        "fluid_leak": 1, 
+        "mechanical_fault": 2,
+        "normal_operation": 3
+    }
+    
+    with open(artifacts_dir / "label_to_idx.json", "w") as f:
+        json.dump(label_map, f, indent=2)
+    
+    # Create dummy scaler (will be overwritten by proper training)
+    import numpy as np
+    dummy_mean = np.zeros(10080)  # Simple features dimension
+    dummy_scale = np.ones(10080)
+    
+    np.save(artifacts_dir / "scaler.mean.npy", dummy_mean)
+    np.save(artifacts_dir / "scaler.scale.npy", dummy_scale)
+    
+    print("✅ Created minimal artifacts")
+
+
 def create_demo_model():
-    """Create a minimal demo model for deployment"""
+    """Create a minimal demo model for deployment or use existing trained model."""
+    print("🎯 Checking for existing trained model...")
+    
+    # Check if we already have a trained model
+    model_path = Path("models/faultsense_cnn.pt")
+    if model_path.exists():
+        print(f"✅ Found existing trained model: {model_path}")
+        print(f"📊 Model size: {model_path.stat().st_size / 1024 / 1024:.1f} MB")
+        
+        # Verify artifacts exist, create if missing
+        artifacts_dir = Path("data/artifacts")
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Check registry
+        registry_path = Path("models/registry.json")
+        if registry_path.exists():
+            registry = json.loads(registry_path.read_text())
+            print(f"📋 Model info: {registry.get('feature_type', 'unknown')}")
+            print(f"   - F1 Score: {registry.get('best_f1', 'unknown')}")
+            print(f"   - Input dim: {registry.get('input_dim', 'unknown')}")
+        
+        # Ensure required artifacts exist
+        required_artifacts = [
+            "label_to_idx.json",
+            "scaler.mean.npy", 
+            "scaler.scale.npy"
+        ]
+        
+        missing_artifacts = []
+        for artifact in required_artifacts:
+            if not (artifacts_dir / artifact).exists():
+                missing_artifacts.append(artifact)
+        
+        if missing_artifacts:
+            print(f"⚠️  Missing artifacts: {missing_artifacts}")
+            print("🔧 Creating missing artifacts...")
+            create_minimal_artifacts()
+        else:
+            print("✅ All required artifacts present")
+        
+        print("🎯 Using existing trained model for deployment!")
+        return
+    
+    print("⚡ No trained model found, creating demo model for deployment...")
     
     # Create models directory
     models_dir = project_root / "models"

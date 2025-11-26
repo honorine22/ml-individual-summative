@@ -30,7 +30,7 @@ data/test/**/*.wav
 !data/curated/manifest.csv
 
 # Model files (too large for Git - train locally)
-models/*.pt
+# models/*.pt  # Allow pre-trained model for deployment
 models/*.pth
 models/*.pkl
 models/*.h5
