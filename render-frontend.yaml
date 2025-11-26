@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: faultsense-frontend
+    env: python
+    plan: starter
+    buildCommand: |
+      pip install --upgrade pip
+      pip install streamlit>=1.28.0 requests>=2.31.0 plotly>=5.15.0 pandas>=2.0.0
+    startCommand: streamlit run app/streamlit_app.py --server.port $PORT --server.headless true --server.address 0.0.0.0
+    envVars:
+      - key: API_URL
+        value: "https://ml-individual-summative.onrender.com"
+      - key: PYTHONUNBUFFERED
+        value: "1"
