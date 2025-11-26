@@ -1,0 +1,156 @@
+"""FastAPI service exposing prediction and retraining endpoints."""
+from __future__ import annotations
+
+import json
+import tempfile
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import List
+
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+from src.model import TrainConfig, retrain_with_new_data
+from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads, warm_wav2vec_cache
+from src.prediction import PredictionService
+
+BASE_DIR = Path("data")
+ARTIFACTS_DIR = BASE_DIR / "artifacts"
+UPLOAD_DIR = BASE_DIR / "uploads"
+MODEL_REGISTRY = Path("models/registry.json")
+
+app = FastAPI(title="FaultSense API", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+_executor = ThreadPoolExecutor(max_workers=1)
+_prediction_service: PredictionService | None = None
+_job_state = {"status": "idle", "message": ""}
+
+
+class PredictResponse(BaseModel):
+    label: str
+    confidence: float
+    distribution: dict
+
+
+class UploadResponse(BaseModel):
+    stored_files: List[str]
+    message: str
+
+
+class RetrainResponse(BaseModel):
+    status: str
+    metrics: dict | None = None
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _load_prediction_service() -> PredictionService:
+    global _prediction_service
+    if _prediction_service is not None:
+        return _prediction_service
+
+    if not MODEL_REGISTRY.exists():
+        raise RuntimeError("Model registry missing; train the model first.")
+
+    registry = json.loads(MODEL_REGISTRY.read_text())
+    model_path = Path(registry["best_model"])
+    _prediction_service = PredictionService(ARTIFACTS_DIR, model_path)
+    return _prediction_service
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
+
+@app.on_event("startup")
+async def bootstrap():  # pragma: no cover
+    warm_wav2vec_cache()
+    if MODEL_REGISTRY.exists():
+        _load_prediction_service()
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/status")
+def status():
+    registry = json.loads(MODEL_REGISTRY.read_text()) if MODEL_REGISTRY.exists() else {}
+    return {"job": _job_state, "model": registry}
+
+
+@app.post("/predict", response_model=PredictResponse)
+async def predict(file: UploadFile = File(...)):
+    service = _load_prediction_service()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=file.filename) as tmp:
+        tmp.write(await file.read())
+        tmp_path = Path(tmp.name)
+    result = service.predict_top(tmp_path)
+    tmp_path.unlink(missing_ok=True)
+    return PredictResponse(**result)
+
+
+@app.post("/upload", response_model=UploadResponse)
+async def upload(label: str = Form(...), files: List[UploadFile] = File(...)):
+    # Validate label
+    valid_labels = ["mechanical_fault", "electrical_fault", "fluid_leak", "normal_operation"]
+    if label not in valid_labels:
+        raise HTTPException(status_code=422, detail=f"Invalid label. Must be one of: {valid_labels}")
+    
+    if not files:
+        raise HTTPException(status_code=422, detail="No files provided")
+    
+    stored = []
+    for file in files:
+        if not file.filename.lower().endswith('.wav'):
+            raise HTTPException(status_code=422, detail=f"File {file.filename} must be a WAV file")
+        dest = UPLOAD_DIR / label / file.filename
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(await file.read())
+        stored.append(str(dest))
+    append_upload_metadata(
+        UPLOAD_DIR / "manifest.json",
+        [{"label": label, "filepath": path} for path in stored],
+    )
+    return UploadResponse(stored_files=stored, message="Files ready for retraining")
+
+
+@app.post("/retrain", response_model=RetrainResponse)
+async def retrain(background: BackgroundTasks):
+    if _job_state["status"] == "running":
+        raise HTTPException(status_code=409, detail="Retraining already in progress")
+
+    def _job():
+        global _prediction_service
+        _job_state.update({"status": "running", "message": "Retraining with uploaded data"})
+        report = retrain_with_new_data(BASE_DIR, prepare_dataset_with_uploads, TrainConfig())
+        _prediction_service = None
+        _job_state.update({"status": "idle", "message": "Retraining completed successfully", "metrics": report.metrics})
+
+    background.add_task(_job)
+    return RetrainResponse(status="scheduled", metrics=None)
+
+
+@app.post("/batch-predict")
+async def batch_predict(files: List[UploadFile] = File(...)):
+    service = _load_prediction_service()
+    responses = []
+    for file in files:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file.filename) as tmp:
+            tmp.write(await file.read())
+            tmp_path = Path(tmp.name)
+        responses.append(service.predict_top(tmp_path))
+        tmp_path.unlink(missing_ok=True)
+    return responses
+

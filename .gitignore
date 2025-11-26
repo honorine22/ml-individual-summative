@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data files (too large for GitHub)
+data/raw/
+data/uploads/
+# Audio files (generated during setup)
+data/train/**/*.wav
+data/test/**/*.wav
+*.wav
+*.mp3
+*.mp4
+# Keep manifest files for rubric
+!data/train_manifest.csv
+!data/test_manifest.csv
+!data/curated/manifest.csv
+
+# Model files (too large for Git - train locally)
+models/*.pt
+models/*.pth
+models/*.pkl
+models/*.h5
+models/*.tf
+mlruns/
+*.ckpt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Environment
+.env
+.env.local
+
+# Reports (keep structure for rubric)
+reports/locust/*.csv

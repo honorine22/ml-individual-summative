@@ -1,0 +1,13 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "DEPLOYMENT_ENV=true ./scripts/start.sh"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+
+[env]
+DEPLOYMENT_ENV = "true"
+API_ONLY = "false"
+PYTHONPATH = "."

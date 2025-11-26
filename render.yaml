@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: faultsense-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: DEPLOYMENT_ENV=true ./scripts/start.sh
+    envVars:
+      - key: DEPLOYMENT_ENV
+        value: "true"
+      - key: API_ONLY
+        value: "false"  
+      - key: PYTHONPATH
+        value: "."
+    healthCheckPath: /health

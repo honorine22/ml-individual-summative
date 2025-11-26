@@ -1,0 +1,513 @@
+{
+  "summary": {
+    "total": 72,
+    "correct": 46,
+    "accuracy": 63.888888888888886
+  },
+  "results": [
+    {
+      "file": "4-90014-B-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "electrical_fault",
+      "confidence": 0.5720477104187012,
+      "correct": true
+    },
+    {
+      "file": "4-175945-A-38.wav",
+      "expected": "electrical_fault",
+      "predicted": "normal_operation",
+      "confidence": 0.7185121178627014,
+      "correct": false
+    },
+    {
+      "file": "2-140147-A-38.wav",
+      "expected": "electrical_fault",
+      "predicted": "fluid_leak",
+      "confidence": 0.7958974838256836,
+      "correct": false
+    },
+    {
+      "file": "2-135728-A-38.wav",
+      "expected": "electrical_fault",
+      "predicted": "normal_operation",
+      "confidence": 0.598945140838623,
+      "correct": false
+    },
+    {
+      "file": "1-31482-A-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.9443641304969788,
+      "correct": false
+    },
+    {
+      "file": "2-70939-A-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "electrical_fault",
+      "confidence": 0.9945960640907288,
+      "correct": true
+    },
+    {
+      "file": "5-209698-A-38.wav",
+      "expected": "electrical_fault",
+      "predicted": "electrical_fault",
+      "confidence": 0.5241937637329102,
+      "correct": true
+    },
+    {
+      "file": "3-170383-A-38.wav",
+      "expected": "electrical_fault",
+      "predicted": "fluid_leak",
+      "confidence": 0.539470911026001,
+      "correct": false
+    },
+    {
+      "file": "4-121532-A-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "normal_operation",
+      "confidence": 0.4435470402240753,
+      "correct": false
+    },
+    {
+      "file": "2-43802-A-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.868395984172821,
+      "correct": false
+    },
+    {
+      "file": "1-21935-A-38.wav",
+      "expected": "electrical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.3535931706428528,
+      "correct": false
+    },
+    {
+      "file": "4-198965-A-38.wav",
+      "expected": "electrical_fault",
+      "predicted": "fluid_leak",
+      "confidence": 0.5868520736694336,
+      "correct": false
+    },
+    {
+      "file": "1-76831-D-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "electrical_fault",
+      "confidence": 0.46348702907562256,
+      "correct": true
+    },
+    {
+      "file": "5-150409-A-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "electrical_fault",
+      "confidence": 0.4387984275817871,
+      "correct": true
+    },
+    {
+      "file": "5-184323-A-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "normal_operation",
+      "confidence": 0.7219932675361633,
+      "correct": false
+    },
+    {
+      "file": "4-67358-A-42.wav",
+      "expected": "electrical_fault",
+      "predicted": "electrical_fault",
+      "confidence": 0.9808586239814758,
+      "correct": true
+    },
+    {
+      "file": "1-28135-B-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.7581349015235901,
+      "correct": true
+    },
+    {
+      "file": "1-12653-A-15.wav",
+      "expected": "fluid_leak",
+      "predicted": "electrical_fault",
+      "confidence": 0.4919576048851013,
+      "correct": false
+    },
+    {
+      "file": "2-73260-A-10.wav",
+      "expected": "fluid_leak",
+      "predicted": "mechanical_fault",
+      "confidence": 0.6791921257972717,
+      "correct": false
+    },
+    {
+      "file": "2-139748-A-15.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.5860397219657898,
+      "correct": true
+    },
+    {
+      "file": "5-195710-A-10.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.4190147817134857,
+      "correct": true
+    },
+    {
+      "file": "4-188293-B-15.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.6229670643806458,
+      "correct": true
+    },
+    {
+      "file": "1-17367-A-10.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.81178218126297,
+      "correct": true
+    },
+    {
+      "file": "1-23094-B-15.wav",
+      "expected": "fluid_leak",
+      "predicted": "normal_operation",
+      "confidence": 0.5429243445396423,
+      "correct": false
+    },
+    {
+      "file": "3-166422-A-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.583514928817749,
+      "correct": true
+    },
+    {
+      "file": "5-208810-A-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.580405056476593,
+      "correct": true
+    },
+    {
+      "file": "3-164593-A-15.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.6847051382064819,
+      "correct": true
+    },
+    {
+      "file": "3-164120-A-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.579186737537384,
+      "correct": true
+    },
+    {
+      "file": "5-219379-A-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.3412710726261139,
+      "correct": true
+    },
+    {
+      "file": "4-188293-A-15.wav",
+      "expected": "fluid_leak",
+      "predicted": "electrical_fault",
+      "confidence": 0.43971315026283264,
+      "correct": false
+    },
+    {
+      "file": "1-26222-A-10.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.872209370136261,
+      "correct": true
+    },
+    {
+      "file": "2-133863-A-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.7298957109451294,
+      "correct": true
+    },
+    {
+      "file": "2-124662-A-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "mechanical_fault",
+      "confidence": 0.7085779905319214,
+      "correct": false
+    },
+    {
+      "file": "1-43760-A-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "fluid_leak",
+      "confidence": 0.7650105953216553,
+      "correct": true
+    },
+    {
+      "file": "5-213077-A-11.wav",
+      "expected": "fluid_leak",
+      "predicted": "mechanical_fault",
+      "confidence": 0.8117349743843079,
+      "correct": false
+    },
+    {
+      "file": "5-261433-A-15.wav",
+      "expected": "fluid_leak",
+      "predicted": "normal_operation",
+      "confidence": 0.5187032222747803,
+      "correct": false
+    },
+    {
+      "file": "1-64398-B-41.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.8719302415847778,
+      "correct": true
+    },
+    {
+      "file": "2-78651-A-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.5964614152908325,
+      "correct": true
+    },
+    {
+      "file": "4-169127-A-41.wav",
+      "expected": "mechanical_fault",
+      "predicted": "fluid_leak",
+      "confidence": 0.698811411857605,
+      "correct": false
+    },
+    {
+      "file": "3-141240-B-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.6776881814002991,
+      "correct": true
+    },
+    {
+      "file": "5-185579-A-41.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.5309481024742126,
+      "correct": true
+    },
+    {
+      "file": "4-165823-A-41.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.5048642158508301,
+      "correct": true
+    },
+    {
+      "file": "2-106015-B-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.8235437273979187,
+      "correct": true
+    },
+    {
+      "file": "1-50455-A-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.5173307061195374,
+      "correct": true
+    },
+    {
+      "file": "1-18527-A-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.6822053790092468,
+      "correct": true
+    },
+    {
+      "file": "5-209992-A-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.8408921360969543,
+      "correct": true
+    },
+    {
+      "file": "5-235507-A-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "normal_operation",
+      "confidence": 0.3398265838623047,
+      "correct": false
+    },
+    {
+      "file": "4-186936-A-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.8737122416496277,
+      "correct": true
+    },
+    {
+      "file": "4-169127-B-41.wav",
+      "expected": "mechanical_fault",
+      "predicted": "fluid_leak",
+      "confidence": 0.5889255404472351,
+      "correct": false
+    },
+    {
+      "file": "2-50667-A-41.wav",
+      "expected": "mechanical_fault",
+      "predicted": "fluid_leak",
+      "confidence": 0.8097919225692749,
+      "correct": false
+    },
+    {
+      "file": "2-106014-A-44.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.6288530826568604,
+      "correct": true
+    },
+    {
+      "file": "3-118658-B-41.wav",
+      "expected": "mechanical_fault",
+      "predicted": "mechanical_fault",
+      "confidence": 0.8319880962371826,
+      "correct": true
+    },
+    {
+      "file": "5-253094-A-49.wav",
+      "expected": "normal_operation",
+      "predicted": "fluid_leak",
+      "confidence": 0.8012383580207825,
+      "correct": false
+    },
+    {
+      "file": "2-51630-A-49.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.47707509994506836,
+      "correct": true
+    },
+    {
+      "file": "1-97392-A-0.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.9076094031333923,
+      "correct": true
+    },
+    {
+      "file": "3-155568-A-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.6583805084228516,
+      "correct": true
+    },
+    {
+      "file": "3-180256-A-0.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.9505881667137146,
+      "correct": true
+    },
+    {
+      "file": "5-223099-B-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.45669448375701904,
+      "correct": true
+    },
+    {
+      "file": "5-244178-A-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.6404176950454712,
+      "correct": true
+    },
+    {
+      "file": "5-208030-A-0.wav",
+      "expected": "normal_operation",
+      "predicted": "fluid_leak",
+      "confidence": 0.4323514699935913,
+      "correct": false
+    },
+    {
+      "file": "1-84393-A-32.wav",
+      "expected": "normal_operation",
+      "predicted": "fluid_leak",
+      "confidence": 0.34094706177711487,
+      "correct": false
+    },
+    {
+      "file": "1-30344-A-0.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.7403108477592468,
+      "correct": true
+    },
+    {
+      "file": "4-185613-A-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.793980598449707,
+      "correct": true
+    },
+    {
+      "file": "1-94231-B-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.6220009922981262,
+      "correct": true
+    },
+    {
+      "file": "2-118964-A-0.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.6941712498664856,
+      "correct": true
+    },
+    {
+      "file": "3-208820-A-49.wav",
+      "expected": "normal_operation",
+      "predicted": "mechanical_fault",
+      "confidence": 0.6742485165596008,
+      "correct": false
+    },
+    {
+      "file": "1-79711-A-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.5712791085243225,
+      "correct": true
+    },
+    {
+      "file": "2-118459-B-32.wav",
+      "expected": "normal_operation",
+      "predicted": "mechanical_fault",
+      "confidence": 0.6522748470306396,
+      "correct": false
+    },
+    {
+      "file": "3-136288-A-0.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.3769688606262207,
+      "correct": true
+    },
+    {
+      "file": "4-177243-A-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.7847484946250916,
+      "correct": true
+    },
+    {
+      "file": "2-99796-A-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.7119264602661133,
+      "correct": true
+    },
+    {
+      "file": "3-154781-A-32.wav",
+      "expected": "normal_operation",
+      "predicted": "normal_operation",
+      "confidence": 0.4978034198284149,
+      "correct": true
+    }
+  ]
+}
