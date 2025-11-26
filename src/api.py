@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.model import TrainConfig, retrain_with_new_data
-from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads, warm_wav2vec_cache
+from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads
 from src.prediction import PredictionService
 
 BASE_DIR = Path("data")
@@ -74,7 +74,8 @@ def _load_prediction_service() -> PredictionService:
 
 @app.on_event("startup")
 async def bootstrap():  # pragma: no cover
-    warm_wav2vec_cache()
+    # Skip wav2vec cache warming to save memory on deployment
+    # Cache will be warmed on first prediction request
     if MODEL_REGISTRY.exists():
         _load_prediction_service()
 
