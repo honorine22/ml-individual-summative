@@ -59,9 +59,34 @@ def create_demo_model():
     artifacts_dir = project_root / "data" / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     
-    # Create a minimal model with random weights
+    # Calculate correct feature dimensions by actually extracting features
+    from src.fast_prediction import extract_features_fast
+    from src.preprocessing import FeatureConfig
+    import numpy as np
+    import soundfile as sf
+    import tempfile
+    
+    # Create a dummy audio file to get exact feature dimensions
+    config = FeatureConfig()
+    sample_rate = config.sample_rate
+    duration = config.duration
+    t = np.linspace(0, duration, int(sample_rate * duration))
+    dummy_audio = 0.1 * np.sin(2 * np.pi * 440 * t)
+    
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+        sf.write(tmp.name, dummy_audio, sample_rate)
+        dummy_path = Path(tmp.name)
+    
+    # Extract features to get exact dimensions
+    dummy_features = extract_features_fast(dummy_path, config)
+    total_features = len(dummy_features)
+    dummy_path.unlink()
+    
+    print(f"📊 Creating model with {total_features} input features (actual dimensions)")
+    
+    # Create a model with correct dimensions
     model = FaultSenseCNN(
-        input_dim=128,  # Minimal input dimension
+        input_dim=total_features,
         num_classes=4,
         dropout=0.3
     )
@@ -81,10 +106,10 @@ def create_demo_model():
     with open(artifacts_dir / "label_to_idx.json", 'w') as f:
         json.dump(label_to_idx, f, indent=2)
     
-    # Create dummy scaler data (128 features)
+    # Create dummy scaler data with correct dimensions
     import numpy as np
-    dummy_mean = np.zeros(128)
-    dummy_scale = np.ones(128)
+    dummy_mean = np.zeros(total_features)
+    dummy_scale = np.ones(total_features)
     
     np.save(artifacts_dir / "scaler.mean.npy", dummy_mean)
     np.save(artifacts_dir / "scaler.mean.scale.npy", dummy_scale)
