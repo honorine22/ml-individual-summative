@@ -12,8 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.model import TrainConfig, retrain_with_new_data
-from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads
-from src.fast_prediction import FastPredictionService
+from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads, warm_wav2vec_cache
+from src.simple_prediction import SimplePredictionService as PredictionService
 
 BASE_DIR = Path("data")
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
@@ -29,7 +29,7 @@ app.add_middleware(
 )
 
 _executor = ThreadPoolExecutor(max_workers=1)
-_prediction_service: FastPredictionService | None = None
+_prediction_service: PredictionService | None = None
 _job_state = {"status": "idle", "message": ""}
 
 
@@ -53,7 +53,7 @@ class RetrainResponse(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _load_prediction_service() -> FastPredictionService:
+def _load_prediction_service() -> PredictionService:
     global _prediction_service
     if _prediction_service is not None:
         return _prediction_service
@@ -63,7 +63,7 @@ def _load_prediction_service() -> FastPredictionService:
 
     registry = json.loads(MODEL_REGISTRY.read_text())
     model_path = Path(registry["best_model"])
-    _prediction_service = FastPredictionService(ARTIFACTS_DIR, model_path)
+    _prediction_service = PredictionService(ARTIFACTS_DIR, model_path)
     return _prediction_service
 
 
@@ -74,8 +74,9 @@ def _load_prediction_service() -> FastPredictionService:
 
 @app.on_event("startup")
 async def bootstrap():  # pragma: no cover
-    # Skip wav2vec cache warming to save memory on deployment
-    # Cache will be warmed on first prediction request
+    # Warm wav2vec cache for better prediction accuracy
+    # Comment out the next line if deploying with memory constraints
+    warm_wav2vec_cache()
     if MODEL_REGISTRY.exists():
         _load_prediction_service()
 
