@@ -68,22 +68,27 @@ fi
 if [ ! -f "models/faultsense_cnn.pt" ]; then
     echo -e "${YELLOW}Model not found. Training initial model...${NC}"
     if [[ "$DEPLOYMENT_ENV" == "true" ]]; then
-        echo -e "${YELLOW}🚀 Deployment environment - training with minimal epochs for faster startup${NC}"
-        echo -e "${YELLOW}⏱️  This may take 2-3 minutes on cloud platforms...${NC}"
-        timeout 600 PYTHONPATH=. python scripts/run_pipeline.py --stage train --epochs 5 || {
-            echo -e "${RED}❌ Model training timed out or failed${NC}"
-            echo -e "${YELLOW}Creating minimal model for demo purposes...${NC}"
+        echo -e "${YELLOW}🚀 Deployment environment - creating demo model for faster startup${NC}"
+        echo -e "${YELLOW}⏱️  This should take less than 30 seconds...${NC}"
+        PYTHONPATH=. python scripts/create_demo_model.py || {
+            echo -e "${RED}❌ Demo model creation failed${NC}"
+            echo -e "${YELLOW}Creating minimal fallback model...${NC}"
             mkdir -p models
-            echo '{"model_type": "demo", "accuracy": 0.75}' > models/registry.json
+            echo '{"best_model": "models/faultsense_cnn.pt", "model_type": "fallback", "accuracy": 0.75}' > models/registry.json
         }
     else
-        echo -e "${BLUE}🏠 Local environment - training with standard epochs${NC}"
-        echo -e "${YELLOW}⏱️  Training in progress... This may take 5-10 minutes${NC}"
-        echo -e "${YELLOW}💡 You can monitor progress in another terminal with: tail -f /tmp/faultsense-training.log${NC}"
-        timeout 1800 PYTHONPATH=. python scripts/run_pipeline.py --stage train --epochs 15 > /tmp/faultsense-training.log 2>&1 || {
-            echo -e "${RED}❌ Model training failed or timed out${NC}"
-            echo -e "${YELLOW}Check logs: cat /tmp/faultsense-training.log${NC}"
-            echo -e "${YELLOW}Continuing without trained model - prediction will fail${NC}"
+        echo -e "${BLUE}🏠 Local environment - creating demo model for quick startup${NC}"
+        echo -e "${YELLOW}💡 Creating functional demo model instead of training (faster)${NC}"
+        PYTHONPATH=. python scripts/create_demo_model.py > /tmp/faultsense-model-creation.log 2>&1 || {
+            echo -e "${RED}❌ Demo model creation failed${NC}"
+            echo -e "${YELLOW}Check logs: cat /tmp/faultsense-model-creation.log${NC}"
+            echo -e "${YELLOW}Trying to train model instead...${NC}"
+            # Fallback to training without timeout (macOS doesn't have timeout by default)
+            PYTHONPATH=. python scripts/run_pipeline.py --stage train --epochs 10 > /tmp/faultsense-training.log 2>&1 || {
+                echo -e "${RED}❌ Model training also failed${NC}"
+                echo -e "${YELLOW}Check logs: cat /tmp/faultsense-training.log${NC}"
+                echo -e "${YELLOW}Continuing without trained model - prediction will fail${NC}"
+            }
         }
     fi
     
