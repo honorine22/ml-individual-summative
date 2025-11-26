@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from src.model import TrainConfig, retrain_with_new_data
 from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads
-from src.prediction import PredictionService
+from src.fast_prediction import FastPredictionService
 
 BASE_DIR = Path("data")
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
@@ -29,7 +29,7 @@ app.add_middleware(
 )
 
 _executor = ThreadPoolExecutor(max_workers=1)
-_prediction_service: PredictionService | None = None
+_prediction_service: FastPredictionService | None = None
 _job_state = {"status": "idle", "message": ""}
 
 
@@ -53,7 +53,7 @@ class RetrainResponse(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _load_prediction_service() -> PredictionService:
+def _load_prediction_service() -> FastPredictionService:
     global _prediction_service
     if _prediction_service is not None:
         return _prediction_service
@@ -63,7 +63,7 @@ def _load_prediction_service() -> PredictionService:
 
     registry = json.loads(MODEL_REGISTRY.read_text())
     model_path = Path(registry["best_model"])
-    _prediction_service = PredictionService(ARTIFACTS_DIR, model_path)
+    _prediction_service = FastPredictionService(ARTIFACTS_DIR, model_path)
     return _prediction_service
 
 
@@ -93,13 +93,23 @@ def status():
 
 @app.post("/predict", response_model=PredictResponse)
 async def predict(file: UploadFile = File(...)):
+    import time
+    start_time = time.time()
+    
+    print(f"📥 Prediction request: {file.filename} ({file.size} bytes)")
+    
     service = _load_prediction_service()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=file.filename) as tmp:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
         tmp.write(await file.read())
         tmp_path = Path(tmp.name)
-    result = service.predict_top(tmp_path)
-    tmp_path.unlink(missing_ok=True)
-    return PredictResponse(**result)
+    
+    try:
+        result = service.predict_top(tmp_path)
+        total_time = time.time() - start_time
+        print(f"✅ Prediction completed in {total_time:.3f}s: {result['label']} ({result['confidence']:.2%})")
+        return PredictResponse(**result)
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
 
 @app.post("/upload", response_model=UploadResponse)

@@ -390,7 +390,7 @@ def render_predict_tab():
             with st.spinner("Analyzing audio..."):
                 files = {"file": (uploaded.name, io.BytesIO(audio_bytes), uploaded.type)}
                 try:
-                    resp = requests.post(f"{API_URL}/predict", files=files, timeout=60)
+                    resp = requests.post(f"{API_URL}/predict", files=files, timeout=30)
                     resp.raise_for_status()
                     result = resp.json()
                     
