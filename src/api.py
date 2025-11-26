@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from src.model import TrainConfig, retrain_with_new_data
 from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads
-from src.fast_prediction import FastPredictionService
+from src.smart_prediction import SmartPredictionService
 
 BASE_DIR = Path("data")
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
@@ -29,7 +29,7 @@ app.add_middleware(
 )
 
 _executor = ThreadPoolExecutor(max_workers=1)
-_prediction_service: FastPredictionService | None = None
+_prediction_service: SmartPredictionService | None = None
 _job_state = {"status": "idle", "message": ""}
 
 
@@ -53,7 +53,7 @@ class RetrainResponse(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _load_prediction_service() -> FastPredictionService:
+def _load_prediction_service() -> SmartPredictionService:
     global _prediction_service
     if _prediction_service is not None:
         return _prediction_service
@@ -63,7 +63,7 @@ def _load_prediction_service() -> FastPredictionService:
 
     registry = json.loads(MODEL_REGISTRY.read_text())
     model_path = Path(registry["best_model"])
-    _prediction_service = FastPredictionService(ARTIFACTS_DIR, model_path)
+    _prediction_service = SmartPredictionService(ARTIFACTS_DIR, model_path)
     return _prediction_service
 
 
