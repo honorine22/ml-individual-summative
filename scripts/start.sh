@@ -112,9 +112,11 @@ trap cleanup SIGINT SIGTERM
 # Configure ports based on environment
 if [[ "$DEPLOYMENT_ENV" == "true" ]]; then
     API_PORT=${PORT:-8000}
-    STREAMLIT_PORT=${STREAMLIT_PORT:-8501}
+    # For Render, use API_PORT + 1 for Streamlit since Render only exposes one port officially
+    STREAMLIT_PORT=$((API_PORT + 1))
     API_HOST="0.0.0.0"
     echo -e "${GREEN}🌐 Deployment mode - API on port $API_PORT, Streamlit on port $STREAMLIT_PORT${NC}"
+    echo -e "${YELLOW}💡 On Render: API will be accessible at your app URL, Streamlit at URL:$STREAMLIT_PORT${NC}"
 else
     API_PORT=8000
     STREAMLIT_PORT=8501
