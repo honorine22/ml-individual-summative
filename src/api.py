@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.model import TrainConfig, retrain_with_new_data
-from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads, warm_wav2vec_cache
+from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads
 from src.production_prediction import ProductionPredictionService as PredictionService
 
 BASE_DIR = Path("data")
@@ -54,6 +54,7 @@ class RetrainResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 def _load_prediction_service() -> PredictionService:
+    """Lazy load the prediction service on first request to save memory."""
     global _prediction_service
     if _prediction_service is not None:
         return _prediction_service
@@ -61,9 +62,11 @@ def _load_prediction_service() -> PredictionService:
     if not MODEL_REGISTRY.exists():
         raise RuntimeError("Model registry missing; train the model first.")
 
+    print("📦 Loading prediction model (first request)...")
     registry = json.loads(MODEL_REGISTRY.read_text())
     model_path = Path(registry["best_model"])
     _prediction_service = PredictionService(ARTIFACTS_DIR, model_path)
+    print("✅ Model loaded and ready")
     return _prediction_service
 
 
@@ -74,11 +77,14 @@ def _load_prediction_service() -> PredictionService:
 
 @app.on_event("startup")
 async def bootstrap():  # pragma: no cover
-    # Warm wav2vec cache for better prediction accuracy
-    # Comment out the next line if deploying with memory constraints
-    warm_wav2vec_cache()
+    # Lazy loading: Model will be loaded on first prediction request
+    # This saves memory during startup (important for Render's 512MB limit)
+    # Wav2Vec2 is NOT used in production, so we skip warming that cache
+    print("🚀 API starting up (model will load on first request)...")
     if MODEL_REGISTRY.exists():
-        _load_prediction_service()
+        print("✅ Model registry found - ready for predictions")
+    else:
+        print("⚠️  Model registry not found - ensure model is trained")
 
 
 @app.get("/health")
