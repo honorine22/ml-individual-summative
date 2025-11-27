@@ -17,7 +17,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import torch
 from torch.utils.data import Dataset
-import torchaudio
+
+# Optional import for Wav2Vec2 (not used in production)
+try:
+    import torchaudio
+    TORCHAUDIO_AVAILABLE = True
+except ImportError:
+    TORCHAUDIO_AVAILABLE = False
+    torchaudio = None
 
 ESC50_URL = "https://github.com/karoldvl/ESC-50/archive/master.zip"
 ESC50_ZIP = "esc50.zip"
@@ -26,6 +33,8 @@ _WAV2VEC_CACHE: Dict[str, torch.nn.Module] = {}
 
 
 def _get_wav2vec2_model():
+    if not TORCHAUDIO_AVAILABLE:
+        raise ImportError("torchaudio is not available. Wav2Vec2 features are disabled.")
     if "model" not in _WAV2VEC_CACHE:
         bundle = torchaudio.pipelines.WAV2VEC2_BASE
         model = bundle.get_model()
