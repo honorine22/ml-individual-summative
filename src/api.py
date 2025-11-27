@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from src.model import TrainConfig, retrain_with_new_data
 from src.preprocessing import FeatureConfig, append_upload_metadata, prepare_dataset_with_uploads, warm_wav2vec_cache
-from src.simple_prediction import SimplePredictionService as PredictionService
+from src.production_prediction import ProductionPredictionService as PredictionService
 
 BASE_DIR = Path("data")
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
