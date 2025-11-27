@@ -8,13 +8,24 @@ import tempfile
 import time
 from pathlib import Path
 
+# Configure matplotlib for production (disable font cache building)
+os.environ['MPLCONFIGDIR'] = '/tmp/matplotlib'  # Use temp directory for cache
+os.environ['MPLBACKEND'] = 'Agg'  # Set backend via environment variable
+
 # Set matplotlib backend before importing pyplot (required for production)
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend for production
+# Disable font cache warnings
+matplotlib.rcParams['font.family'] = 'DejaVu Sans'  # Use built-in font
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
 
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
+# Suppress matplotlib font cache messages
+import logging
+logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 import numpy as np
 import pandas as pd
 import plotly.express as px
