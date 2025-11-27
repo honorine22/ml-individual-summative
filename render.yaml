@@ -4,9 +4,14 @@ services:
     env: python
     plan: starter
     buildCommand: |
+      echo "🚀 Starting FaultSense build..."
+      echo "📦 Installing dependencies..."
       pip install --upgrade pip
       pip install --no-cache-dir -r requirements-minimal.txt
+      echo "✅ Dependencies installed"
+      echo "🔍 Checking for model from GitHub (Git LFS)..."
       python scripts/create_demo_model.py
+      echo "✅ Build preparation complete"
     startCommand: PYTHONPATH=. uvicorn src.api:app --host 0.0.0.0 --port $PORT --workers 1
     envVars:
       - key: PYTHONPATH
