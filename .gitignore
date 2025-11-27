@@ -30,8 +30,6 @@ data/test/**/*.wav
 !data/curated/manifest.csv
 
 # Model files (too large for Git - train locally)
-# models/*.pt  # Allow pre-trained model for deployment
-models/*.pth
 models/*.pkl
 models/*.h5
 models/*.tf
@@ -65,6 +63,3 @@ logs/
 # Reports (keep structure for rubric)
 reports/locust/*.csv
 
-# Model files (too large for GitHub)
-models/*.pt
-models/*.pth
