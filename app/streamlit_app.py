@@ -3,9 +3,14 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import tempfile
 import time
 from pathlib import Path
+
+# Set matplotlib backend before importing pyplot (required for production)
+import matplotlib
+matplotlib.use('Agg')  # Non-interactive backend for production
 
 import librosa
 import librosa.display
@@ -18,7 +23,6 @@ import requests
 import streamlit as st
 
 # Get API URL from environment or use default
-import os
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="FaultSense Control Room", layout="wide", initial_sidebar_state="expanded")
@@ -360,31 +364,74 @@ def render_predict_tab():
             tmp_path = tmp.name
         
         try:
+            # Load audio file
             y, sr = librosa.load(tmp_path, sr=16000)
             
-            col1, col2 = st.columns(2)
-            with col1:
-                # Waveform
-                fig, ax = plt.subplots(figsize=(10, 3))
-                ax.plot(y)
-                ax.set_title("Waveform")
-                ax.set_xlabel("Sample")
-                ax.set_ylabel("Amplitude")
-                st.pyplot(fig)
-            
-            with col2:
-                # Spectrogram
-                mel = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=1024, hop_length=512, n_mels=64)
-                mel_db = librosa.power_to_db(mel, ref=np.max)
-                fig, ax = plt.subplots(figsize=(10, 3))
-                img = librosa.display.specshow(mel_db, sr=sr, hop_length=512, ax=ax, cmap="magma")
-                ax.set_title("Mel Spectrogram")
-                fig.colorbar(img, ax=ax, format="%+2.0f dB")
-                st.pyplot(fig)
+            if len(y) == 0:
+                st.warning("⚠️ Audio file appears to be empty or corrupted")
+            else:
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    try:
+                        # Waveform visualization
+                        fig, ax = plt.subplots(figsize=(10, 3))
+                        # Downsample for display if too long
+                        if len(y) > 100000:
+                            step = len(y) // 100000
+                            y_display = y[::step]
+                        else:
+                            y_display = y
+                        ax.plot(y_display)
+                        ax.set_title("Waveform")
+                        ax.set_xlabel("Sample")
+                        ax.set_ylabel("Amplitude")
+                        ax.grid(True, alpha=0.3)
+                        plt.tight_layout()
+                        st.pyplot(fig, use_container_width=True)
+                        plt.close(fig)  # Free memory
+                    except Exception as e:
+                        st.error(f"❌ Error displaying waveform: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
+                
+                with col2:
+                    try:
+                        # Spectrogram visualization
+                        mel = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=1024, hop_length=512, n_mels=64)
+                        mel_db = librosa.power_to_db(mel, ref=np.max)
+                        
+                        fig, ax = plt.subplots(figsize=(10, 3))
+                        img = librosa.display.specshow(
+                            mel_db, 
+                            sr=sr, 
+                            hop_length=512, 
+                            ax=ax, 
+                            cmap="magma",
+                            x_axis='time',
+                            y_axis='mel'
+                        )
+                        ax.set_title("Mel Spectrogram")
+                        fig.colorbar(img, ax=ax, format="%+2.0f dB")
+                        plt.tight_layout()
+                        st.pyplot(fig, use_container_width=True)
+                        plt.close(fig)  # Free memory
+                    except Exception as e:
+                        st.error(f"❌ Error displaying spectrogram: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
+                        
         except Exception as e:
-            st.warning(f"Could not visualize audio: {e}")
+            st.error(f"❌ Could not process audio file: {str(e)}")
+            import traceback
+            with st.expander("🔍 Error Details"):
+                st.code(traceback.format_exc())
         finally:
-            Path(tmp_path).unlink(missing_ok=True)
+            # Clean up temp file
+            try:
+                Path(tmp_path).unlink(missing_ok=True)
+            except:
+                pass
         
         if st.button("🔮 Run Prediction", type="primary"):
             with st.spinner("Analyzing audio..."):
