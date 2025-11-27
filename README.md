@@ -2,15 +2,41 @@
 
 An intelligent audio fault classification system that processes equipment sound recordings to predict fault types (mechanical, electrical, fluid leak, or normal operation). Built with PyTorch, FastAPI, and Streamlit for complete MLOps lifecycle management.
 
+## 🔗 **Live Demo & Links**
+
+- **🎥 Video Demo**: [https://youtu.be/j7G0leHEUzg](https://youtu.be/j7G0leHEUzg)
+- **🌐 Frontend (Streamlit UI)**: [https://faultsense-frontend.onrender.com](https://faultsense-frontend.onrender.com)
+- **⚡ Backend API**: [https://ml-individual-summative.onrender.com](https://ml-individual-summative.onrender.com)
+- **📚 API Documentation**: [https://ml-individual-summative.onrender.com/docs](https://ml-individual-summative.onrender.com/docs)
+
 ## 🎯 Project Overview
 
 This system demonstrates a complete machine learning pipeline for audio classification:
 - **Data Processing**: ESC-50 dataset remapped to fault categories
-- **Feature Engineering**: Log-mel spectrograms, MFCC, and Wav2Vec2 embeddings
-- **Model**: Custom CNN with regularization and class balancing
+- **Feature Engineering**: Log-mel spectrograms, MFCC, and spectral features (10,080 dimensions)
+- **Model**: ProductionFaultCNN with attention mechanism and cross-validation
 - **API**: FastAPI endpoints for prediction and retraining
 - **UI**: Streamlit dashboard with insights and controls
 - **MLOps**: Experiment tracking, model versioning, and automated retraining
+
+## 📊 **Model Performance**
+
+- **Test Accuracy**: 72.5%
+- **F1 Score**: 0.723 (macro), 0.718 (weighted)
+- **Cross-Validation**: 5-fold validation (avg F1: 0.613)
+- **Prediction Confidence**: 98.5-100%
+- **Load Testing**: 15.76 req/sec, 16ms median response time
+
+## 🚀 **Quick Start**
+
+### **Try the Live Demo**
+1. **Web Interface**: Visit [https://faultsense-frontend.onrender.com](https://faultsense-frontend.onrender.com)
+2. **Upload Audio**: Upload a .wav file for fault classification
+3. **View Results**: Get predictions with confidence scores
+4. **API Testing**: Use [https://ml-individual-summative.onrender.com/docs](https://ml-individual-summative.onrender.com/docs) for API exploration
+
+### **Video Demonstration**
+Watch the complete demo: [https://youtu.be/j7G0leHEUzg](https://youtu.be/j7G0leHEUzg)
 
 ## 🏗️ Architecture
 
