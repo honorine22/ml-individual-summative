@@ -1,13 +1,16 @@
 {
   "best_model": "models/faultsense_cnn.pt",
   "best_f1": 0.5566719269549458,
+  "test_accuracy": 0.6389,
   "input_dim": 10080,
   "num_classes": 4,
   "feature_type": "simple_features_no_wav2vec",
+  "model_type": "FaultSenseCNN_Restored",
   "label_map": {
     "electrical_fault": 0,
     "fluid_leak": 1,
     "mechanical_fault": 2,
     "normal_operation": 3
-  }
+  },
+  "notes": "Restored from backup - better balanced predictions"
 }
