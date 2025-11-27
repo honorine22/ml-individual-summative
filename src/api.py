@@ -105,7 +105,7 @@ async def predict(file: UploadFile = File(...)):
         tmp_path = Path(tmp.name)
     
     try:
-        result = service.predict_top(tmp_path)
+        result = service.predict(str(tmp_path))
         total_time = time.time() - start_time
         print(f"✅ Prediction completed in {total_time:.3f}s: {result['label']} ({result['confidence']:.2%})")
         return PredictResponse(**result)
@@ -157,12 +157,20 @@ async def retrain(background: BackgroundTasks):
 @app.post("/batch-predict")
 async def batch_predict(files: List[UploadFile] = File(...)):
     service = _load_prediction_service()
-    responses = []
+    temp_files = []
+    
+    # Save all uploaded files first
     for file in files:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=file.filename) as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(await file.read())
-            tmp_path = Path(tmp.name)
-        responses.append(service.predict_top(tmp_path))
-        tmp_path.unlink(missing_ok=True)
-    return responses
+            temp_files.append(str(tmp.name))
+    
+    try:
+        # Use the batch prediction method
+        responses = service.batch_predict(temp_files)
+        return responses
+    finally:
+        # Clean up temporary files
+        for temp_file in temp_files:
+            Path(temp_file).unlink(missing_ok=True)
 
