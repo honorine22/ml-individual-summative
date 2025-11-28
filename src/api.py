@@ -103,15 +103,34 @@ async def predict(file: UploadFile = File(...)):
     import time
     start_time = time.time()
     
+    # Limit file size to prevent timeouts (max 10MB)
+    max_size = 10 * 1024 * 1024  # 10MB
+    if file.size and file.size > max_size:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {max_size / 1024 / 1024:.1f}MB"
+        )
+    
     print(f"📥 Prediction request: {file.filename} ({file.size} bytes)")
     
     service = _load_prediction_service()
+    
+    # Read file asynchronously
+    file_content = await file.read()
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-        tmp.write(await file.read())
+        tmp.write(file_content)
         tmp_path = Path(tmp.name)
     
     try:
-        result = service.predict(str(tmp_path))
+        # Run prediction in thread pool to avoid blocking
+        import asyncio
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            _executor,
+            service.predict,
+            str(tmp_path)
+        )
+        
         total_time = time.time() - start_time
         print(f"✅ Prediction completed in {total_time:.3f}s: {result['label']} ({result['confidence']:.2%})")
         return PredictResponse(**result)

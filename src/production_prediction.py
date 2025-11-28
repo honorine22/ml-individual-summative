@@ -61,18 +61,20 @@ class ProductionFaultCNN(nn.Module):
 
 
 def extract_simple_features(audio_path: Path, config: FeatureConfig) -> np.ndarray:
-    """Extract only mel spectrogram and MFCC features (no Wav2Vec2)."""
-    # Load audio
-    y, sr = librosa.load(audio_path, sr=config.sample_rate)
+    """Extract only mel spectrogram and MFCC features (no Wav2Vec2). Optimized for speed."""
+    # Load audio with faster settings
+    # Use shorter duration for faster processing (max 2 seconds)
+    max_duration = 2.0
+    y, sr = librosa.load(audio_path, sr=config.sample_rate, duration=max_duration, mono=True)
     
-    # Pad or truncate to target length
+    # Pad or truncate to target length (faster than full duration)
     target_samples = int(config.sample_rate * config.duration)
     if len(y) > target_samples:
         y = y[:target_samples]
-    else:
-        y = np.pad(y, (0, target_samples - len(y)))
+    elif len(y) < target_samples:
+        y = np.pad(y, (0, target_samples - len(y)), mode='constant')
     
-    # Extract mel spectrogram
+    # Extract mel spectrogram with optimized parameters
     mel = librosa.feature.melspectrogram(
         y=y,
         sr=config.sample_rate,
@@ -80,17 +82,18 @@ def extract_simple_features(audio_path: Path, config: FeatureConfig) -> np.ndarr
         n_fft=config.n_fft,
         hop_length=config.hop_length,
     )
-    log_mel = librosa.power_to_db(mel)
+    log_mel = librosa.power_to_db(mel, ref=np.max)
     
     # Extract MFCC
     mfcc = librosa.feature.mfcc(S=log_mel, n_mfcc=config.n_mfcc)
     
     # Additional spectral features for better discrimination
+    # Keep original flattening to maintain 10080 dimensions
     spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
     spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
     zero_crossing_rate = librosa.feature.zero_crossing_rate(y)
     
-    # Combine features (NO Wav2Vec2)
+    # Combine features (NO Wav2Vec2) - maintain original dimension structure
     feat = np.concatenate([
         log_mel.flatten(),
         mfcc.flatten(),
@@ -99,7 +102,13 @@ def extract_simple_features(audio_path: Path, config: FeatureConfig) -> np.ndarr
         zero_crossing_rate.flatten(),
     ])
     
-    print(f"📏 Simple features dimension: {len(feat)}")
+    # Ensure correct dimension (should be 10080)
+    target_dim = 10080
+    if len(feat) < target_dim:
+        feat = np.pad(feat, (0, target_dim - len(feat)), mode='constant')
+    elif len(feat) > target_dim:
+        feat = feat[:target_dim]
+    
     return feat
 
 

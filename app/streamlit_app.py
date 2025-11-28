@@ -374,70 +374,81 @@ def render_predict_tab():
             tmp.write(audio_bytes)
             tmp_path = tmp.name
         
+        # Show visualization in a separate expander to avoid blocking
+        with st.expander("📊 Audio Visualization", expanded=True):
+            try:
+                # Load audio file with limited duration for faster processing
+                max_duration = 5.0  # Limit to 5 seconds for visualization
+                y, sr = librosa.load(tmp_path, sr=16000, duration=max_duration, mono=True)
+                
+                if len(y) == 0:
+                    st.warning("⚠️ Audio file appears to be empty or corrupted")
+                else:
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        try:
+                            # Waveform visualization - optimized
+                            fig, ax = plt.subplots(figsize=(8, 2))
+                            # Aggressive downsampling for display
+                            max_samples = 50000  # Limit to 50k samples
+                            if len(y) > max_samples:
+                                step = len(y) // max_samples
+                                y_display = y[::step]
+                            else:
+                                y_display = y
+                            ax.plot(y_display, linewidth=0.5)
+                            ax.set_title("Waveform", fontsize=10)
+                            ax.set_xlabel("Sample", fontsize=8)
+                            ax.set_ylabel("Amplitude", fontsize=8)
+                            ax.grid(True, alpha=0.3)
+                            plt.tight_layout()
+                            st.pyplot(fig, use_container_width=True)
+                            plt.close(fig)  # Free memory
+                        except Exception as e:
+                            st.error(f"❌ Error displaying waveform: {str(e)}")
+                    
+                    with col2:
+                        try:
+                            # Spectrogram visualization - optimized
+                            # Use smaller parameters for faster computation
+                            mel = librosa.feature.melspectrogram(
+                                y=y, 
+                                sr=sr, 
+                                n_fft=512,  # Reduced from 1024
+                                hop_length=256,  # Reduced from 512
+                                n_mels=32  # Reduced from 64
+                            )
+                            mel_db = librosa.power_to_db(mel, ref=np.max)
+                            
+                            fig, ax = plt.subplots(figsize=(8, 2))
+                            img = librosa.display.specshow(
+                                mel_db, 
+                                sr=sr, 
+                                hop_length=256, 
+                                ax=ax, 
+                                cmap="magma",
+                                x_axis='time',
+                                y_axis='mel'
+                            )
+                            ax.set_title("Mel Spectrogram", fontsize=10)
+                            fig.colorbar(img, ax=ax, format="%+2.0f dB")
+                            plt.tight_layout()
+                            st.pyplot(fig, use_container_width=True)
+                            plt.close(fig)  # Free memory
+                        except Exception as e:
+                            st.error(f"❌ Error displaying spectrogram: {str(e)}")
+            except Exception as e:
+                st.warning(f"⚠️ Could not visualize audio: {str(e)}")
+                st.info("💡 Visualization is optional - prediction will still work")
+        
+        # Clean up temp file after visualization
         try:
-            # Load audio file
-            y, sr = librosa.load(tmp_path, sr=16000)
-            
-            if len(y) == 0:
-                st.warning("⚠️ Audio file appears to be empty or corrupted")
-            else:
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    try:
-                        # Waveform visualization
-                        fig, ax = plt.subplots(figsize=(10, 3))
-                        # Downsample for display if too long
-                        if len(y) > 100000:
-                            step = len(y) // 100000
-                            y_display = y[::step]
-                        else:
-                            y_display = y
-                        ax.plot(y_display)
-                        ax.set_title("Waveform")
-                        ax.set_xlabel("Sample")
-                        ax.set_ylabel("Amplitude")
-                        ax.grid(True, alpha=0.3)
-                        plt.tight_layout()
-                        st.pyplot(fig, use_container_width=True)
-                        plt.close(fig)  # Free memory
-                    except Exception as e:
-                        st.error(f"❌ Error displaying waveform: {str(e)}")
-                        import traceback
-                        st.code(traceback.format_exc())
-                
-                with col2:
-                    try:
-                        # Spectrogram visualization
-                        mel = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=1024, hop_length=512, n_mels=64)
-                        mel_db = librosa.power_to_db(mel, ref=np.max)
-                        
-                        fig, ax = plt.subplots(figsize=(10, 3))
-                        img = librosa.display.specshow(
-                            mel_db, 
-                            sr=sr, 
-                            hop_length=512, 
-                            ax=ax, 
-                            cmap="magma",
-                            x_axis='time',
-                            y_axis='mel'
-                        )
-                        ax.set_title("Mel Spectrogram")
-                        fig.colorbar(img, ax=ax, format="%+2.0f dB")
-                        plt.tight_layout()
-                        st.pyplot(fig, use_container_width=True)
-                        plt.close(fig)  # Free memory
-                    except Exception as e:
-                        st.error(f"❌ Error displaying spectrogram: {str(e)}")
-                        import traceback
-                        st.code(traceback.format_exc())
-                        
-        except Exception as e:
-            st.error(f"❌ Could not process audio file: {str(e)}")
-            import traceback
-            with st.expander("🔍 Error Details"):
-                st.code(traceback.format_exc())
-        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+        except:
+            pass
+        
+        # Prediction button
             # Clean up temp file
             try:
                 Path(tmp_path).unlink(missing_ok=True)
@@ -448,7 +459,8 @@ def render_predict_tab():
             with st.spinner("Analyzing audio..."):
                 files = {"file": (uploaded.name, io.BytesIO(audio_bytes), uploaded.type)}
                 try:
-                    resp = requests.post(f"{API_URL}/predict", files=files, timeout=30)
+                    # Increased timeout to 60 seconds for large files
+                    resp = requests.post(f"{API_URL}/predict", files=files, timeout=60)
                     resp.raise_for_status()
                     result = resp.json()
                     
