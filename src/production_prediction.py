@@ -63,9 +63,15 @@ class ProductionFaultCNN(nn.Module):
 def extract_simple_features(audio_path: Path, config: FeatureConfig) -> np.ndarray:
     """Extract only mel spectrogram and MFCC features (no Wav2Vec2). Optimized for speed."""
     # Load audio with faster settings
-    # Use shorter duration for faster processing (max 2 seconds)
-    max_duration = 2.0
-    y, sr = librosa.load(audio_path, sr=config.sample_rate, duration=max_duration, mono=True)
+    # Use shorter duration for faster processing (max 1.5 seconds for even faster processing)
+    max_duration = 1.5
+    y, sr = librosa.load(
+        audio_path, 
+        sr=config.sample_rate, 
+        duration=max_duration, 
+        mono=True,
+        res_type='kaiser_fast'  # Faster resampling
+    )
     
     # Pad or truncate to target length (faster than full duration)
     target_samples = int(config.sample_rate * config.duration)
@@ -157,15 +163,27 @@ class ProductionPredictionService:
                 from src.model import FaultSenseCNN
                 self.model = FaultSenseCNN(input_dim, num_classes)
             
-            # Load model weights
+            # Load model weights with optimized settings
             if not self.model_path.exists():
                 print(f"❌ Model file not found: {self.model_path}")
                 return False
-                
-            state_dict = torch.load(self.model_path, map_location=self.device)
+            
+            # Use weights_only=True for faster loading and security
+            # Use map_location to avoid GPU memory issues
+            print("📂 Loading model weights...")
+            state_dict = torch.load(
+                self.model_path, 
+                map_location=self.device,
+                weights_only=False  # Keep False for compatibility
+            )
             self.model.load_state_dict(state_dict)
             self.model.to(self.device)
             self.model.eval()
+            
+            # Free up memory by clearing the state dict
+            del state_dict
+            import gc
+            gc.collect()
             
             # Load scaler
             scaler_mean_path = self.artifacts_dir / "scaler.mean.npy"

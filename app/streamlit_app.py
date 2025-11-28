@@ -456,11 +456,22 @@ def render_predict_tab():
                 pass
         
         if st.button("🔮 Run Prediction", type="primary"):
+            # Check if model is ready first
+            try:
+                status_resp = requests.get(f"{API_URL}/status", timeout=5)
+                status_data = status_resp.json()
+                if not status_data.get("model_ready", False):
+                    st.warning("⏳ Model is still loading. Please wait a moment and try again.")
+                    st.info("💡 The model loads automatically on startup. This should only happen once.")
+                    st.stop()
+            except:
+                pass  # Continue if status check fails
+            
             with st.spinner("Analyzing audio..."):
                 files = {"file": (uploaded.name, io.BytesIO(audio_bytes), uploaded.type)}
                 try:
-                    # Increased timeout to 60 seconds for large files
-                    resp = requests.post(f"{API_URL}/predict", files=files, timeout=60)
+                    # Reduced timeout to 55 seconds (matching API timeout)
+                    resp = requests.post(f"{API_URL}/predict", files=files, timeout=55)
                     resp.raise_for_status()
                     result = resp.json()
                     
@@ -479,6 +490,8 @@ def render_predict_tab():
                     )
                     fig.update_layout(showlegend=False)
                     st.plotly_chart(fig, width='stretch')
+                except requests.Timeout:
+                    st.error("⏱️ Request timed out. The audio file may be too large or the server is busy. Try a smaller file or wait a moment.")
                 except requests.RequestException as e:
                     st.error(f"Prediction failed: {e}")
 

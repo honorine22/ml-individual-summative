@@ -77,14 +77,27 @@ def _load_prediction_service() -> PredictionService:
 
 @app.on_event("startup")
 async def bootstrap():  # pragma: no cover
-    # Lazy loading: Model will be loaded on first prediction request
-    # This saves memory during startup (important for Render's 512MB limit)
-    # Wav2Vec2 is NOT used in production, so we skip warming that cache
-    print("🚀 API starting up (model will load on first request)...")
+    # Pre-load model in background to avoid first-request timeout
+    # This ensures model is ready when first prediction comes in
+    print("🚀 API starting up...")
     if MODEL_REGISTRY.exists():
-        print("✅ Model registry found - ready for predictions")
+        print("✅ Model registry found - preloading model...")
+        # Load model in background thread to avoid blocking startup
+        import asyncio
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(_executor, _preload_model)
     else:
         print("⚠️  Model registry not found - ensure model is trained")
+
+
+def _preload_model():
+    """Preload the model in background thread."""
+    try:
+        print("📦 Preloading prediction model in background...")
+        _load_prediction_service()
+        print("✅ Model preloaded and ready for predictions")
+    except Exception as e:
+        print(f"⚠️  Model preload failed (will load on first request): {e}")
 
 
 @app.get("/health")
@@ -95,7 +108,13 @@ def health():
 @app.get("/status")
 def status():
     registry = json.loads(MODEL_REGISTRY.read_text()) if MODEL_REGISTRY.exists() else {}
-    return {"job": _job_state, "model": registry}
+    model_ready = _prediction_service is not None
+    return {
+        "job": _job_state, 
+        "model": registry,
+        "model_ready": model_ready,
+        "status": "ready" if model_ready else "loading"
+    }
 
 
 @app.post("/predict", response_model=PredictResponse)
@@ -103,8 +122,8 @@ async def predict(file: UploadFile = File(...)):
     import time
     start_time = time.time()
     
-    # Limit file size to prevent timeouts (max 10MB)
-    max_size = 10 * 1024 * 1024  # 10MB
+    # Limit file size to prevent timeouts (max 5MB for faster processing)
+    max_size = 5 * 1024 * 1024  # 5MB
     if file.size and file.size > max_size:
         raise HTTPException(
             status_code=413,
@@ -113,7 +132,14 @@ async def predict(file: UploadFile = File(...)):
     
     print(f"📥 Prediction request: {file.filename} ({file.size} bytes)")
     
-    service = _load_prediction_service()
+    # Ensure model is loaded (with timeout protection)
+    try:
+        service = _load_prediction_service()
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Model not ready: {str(e)}. Please try again in a moment."
+        )
     
     # Read file asynchronously
     file_content = await file.read()
@@ -122,18 +148,30 @@ async def predict(file: UploadFile = File(...)):
         tmp_path = Path(tmp.name)
     
     try:
-        # Run prediction in thread pool to avoid blocking
+        # Run prediction in thread pool with timeout
         import asyncio
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            _executor,
-            service.predict,
-            str(tmp_path)
+        
+        # Set a timeout for the prediction (50 seconds max)
+        result = await asyncio.wait_for(
+            loop.run_in_executor(_executor, service.predict, str(tmp_path)),
+            timeout=50.0
         )
         
         total_time = time.time() - start_time
         print(f"✅ Prediction completed in {total_time:.3f}s: {result['label']} ({result['confidence']:.2%})")
         return PredictResponse(**result)
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=504,
+            detail="Prediction timed out. The audio file may be too long or complex."
+        )
+    except Exception as e:
+        print(f"❌ Prediction error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction failed: {str(e)}"
+        )
     finally:
         tmp_path.unlink(missing_ok=True)
 
