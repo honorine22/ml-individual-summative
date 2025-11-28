@@ -374,12 +374,18 @@ def render_predict_tab():
             tmp.write(audio_bytes)
             tmp_path = tmp.name
         
-        # Show visualization in a separate expander to avoid blocking
+        # Show visualization - optimized for fast loading in production
         with st.expander("📊 Audio Visualization", expanded=True):
             try:
-                # Load audio file with limited duration for faster processing
-                max_duration = 5.0  # Limit to 5 seconds for visualization
-                y, sr = librosa.load(tmp_path, sr=16000, duration=max_duration, mono=True)
+                # Load audio file with very limited duration for fast processing (2 seconds max)
+                max_duration = 2.0  # Reduced from 5 seconds for faster loading
+                y, sr = librosa.load(
+                    tmp_path, 
+                    sr=16000, 
+                    duration=max_duration, 
+                    mono=True,
+                    res_type='kaiser_fast'  # Fast resampling like in prediction
+                )
                 
                 if len(y) == 0:
                     st.warning("⚠️ Audio file appears to be empty or corrupted")
@@ -388,54 +394,58 @@ def render_predict_tab():
                     
                     with col1:
                         try:
-                            # Waveform visualization - optimized
+                            # Waveform visualization - ultra-optimized for speed
                             fig, ax = plt.subplots(figsize=(8, 2))
-                            # Aggressive downsampling for display
-                            max_samples = 50000  # Limit to 50k samples
+                            # Very aggressive downsampling for fast display (20k samples max)
+                            max_samples = 20000  # Reduced from 50k for faster rendering
                             if len(y) > max_samples:
                                 step = len(y) // max_samples
                                 y_display = y[::step]
                             else:
                                 y_display = y
-                            ax.plot(y_display, linewidth=0.5)
-                            ax.set_title("Waveform", fontsize=10)
-                            ax.set_xlabel("Sample", fontsize=8)
-                            ax.set_ylabel("Amplitude", fontsize=8)
-                            ax.grid(True, alpha=0.3)
-                            plt.tight_layout()
-                            st.pyplot(fig, use_container_width=True)
-                            plt.close(fig)  # Free memory
+                            
+                            # Use simpler plotting for speed
+                            ax.plot(y_display, linewidth=0.3, alpha=0.8)
+                            ax.set_title("Waveform", fontsize=9)
+                            ax.set_xlabel("Sample", fontsize=7)
+                            ax.set_ylabel("Amplitude", fontsize=7)
+                            ax.grid(True, alpha=0.2, linestyle='--')
+                            plt.tight_layout(pad=0.5)
+                            st.pyplot(fig, use_container_width=True, clear_figure=True)
+                            plt.close(fig)  # Free memory immediately
                         except Exception as e:
                             st.error(f"❌ Error displaying waveform: {str(e)}")
                     
                     with col2:
                         try:
-                            # Spectrogram visualization - optimized
-                            # Use smaller parameters for faster computation
+                            # Spectrogram visualization - ultra-optimized for speed
+                            # Use minimal parameters for fastest computation
                             mel = librosa.feature.melspectrogram(
                                 y=y, 
                                 sr=sr, 
-                                n_fft=512,  # Reduced from 1024
-                                hop_length=256,  # Reduced from 512
-                                n_mels=32  # Reduced from 64
+                                n_fft=256,  # Further reduced from 512
+                                hop_length=128,  # Further reduced from 256
+                                n_mels=24  # Further reduced from 32
                             )
                             mel_db = librosa.power_to_db(mel, ref=np.max)
                             
                             fig, ax = plt.subplots(figsize=(8, 2))
+                            # Simplified specshow for speed
                             img = librosa.display.specshow(
                                 mel_db, 
                                 sr=sr, 
-                                hop_length=256, 
+                                hop_length=128, 
                                 ax=ax, 
                                 cmap="magma",
                                 x_axis='time',
                                 y_axis='mel'
                             )
-                            ax.set_title("Mel Spectrogram", fontsize=10)
-                            fig.colorbar(img, ax=ax, format="%+2.0f dB")
-                            plt.tight_layout()
-                            st.pyplot(fig, use_container_width=True)
-                            plt.close(fig)  # Free memory
+                            ax.set_title("Mel Spectrogram", fontsize=9)
+                            # Smaller colorbar for speed
+                            fig.colorbar(img, ax=ax, format="%+2.0f dB", fraction=0.046)
+                            plt.tight_layout(pad=0.5)
+                            st.pyplot(fig, use_container_width=True, clear_figure=True)
+                            plt.close(fig)  # Free memory immediately
                         except Exception as e:
                             st.error(f"❌ Error displaying spectrogram: {str(e)}")
             except Exception as e:

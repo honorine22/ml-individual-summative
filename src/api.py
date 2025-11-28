@@ -77,27 +77,57 @@ def _load_prediction_service() -> PredictionService:
 
 @app.on_event("startup")
 async def bootstrap():  # pragma: no cover
-    # Pre-load model in background to avoid first-request timeout
-    # This ensures model is ready when first prediction comes in
+    # Pre-load model synchronously to ensure it's ready before accepting requests
+    # This prevents "model still loading" errors on first request
     print("🚀 API starting up...")
     if MODEL_REGISTRY.exists():
-        print("✅ Model registry found - preloading model...")
-        # Load model in background thread to avoid blocking startup
-        import asyncio
-        loop = asyncio.get_event_loop()
-        loop.run_in_executor(_executor, _preload_model)
+        print("✅ Model registry found - loading model...")
+        try:
+            # Load model synchronously in startup to ensure it's ready
+            # Use executor to avoid blocking the event loop, but wait for completion
+            import asyncio
+            loop = asyncio.get_event_loop()
+            
+            # Set a timeout for model loading (60 seconds max)
+            try:
+                await asyncio.wait_for(
+                    loop.run_in_executor(_executor, _preload_model),
+                    timeout=60.0
+                )
+                print("✅ Model loaded successfully - API ready for predictions")
+            except asyncio.TimeoutError:
+                print("⚠️  Model loading timed out during startup (60s)")
+                print("⚠️  Model will attempt to load on first request")
+        except Exception as e:
+            print(f"⚠️  Model loading failed during startup: {e}")
+            import traceback
+            traceback.print_exc()
+            print("⚠️  Model will attempt to load on first request")
     else:
         print("⚠️  Model registry not found - ensure model is trained")
 
 
 def _preload_model():
-    """Preload the model in background thread."""
+    """Preload the model - called during startup."""
     try:
-        print("📦 Preloading prediction model in background...")
-        _load_prediction_service()
-        print("✅ Model preloaded and ready for predictions")
+        print("📦 Loading prediction model...")
+        service = _load_prediction_service()
+        
+        # Verify model is actually loaded
+        if service is None:
+            raise RuntimeError("Model service is None after loading")
+        if service.model is None:
+            raise RuntimeError("Model is None after loading")
+        
+        print("✅ Model loaded and ready for predictions")
+        print(f"   Model type: {type(service.model).__name__}")
+        print(f"   Device: {service.device}")
+        print(f"   Labels: {list(service.label_map.keys()) if service.label_map else 'None'}")
     except Exception as e:
-        print(f"⚠️  Model preload failed (will load on first request): {e}")
+        print(f"❌ Model preload failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise  # Re-raise so startup knows it failed
 
 
 @app.get("/health")

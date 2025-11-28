@@ -135,15 +135,14 @@ class ProductionPredictionService:
         self.load_model()
     
     def load_model(self) -> bool:
-        """Load the production model and artifacts."""
+        """Load the production model and artifacts. Raises exception on failure."""
         try:
             print(f"🔧 Loading production model from: {self.model_path}")
             
             # Load registry for model configuration
             registry_path = Path("models/registry.json")
             if not registry_path.exists():
-                print("❌ Registry file not found")
-                return False
+                raise FileNotFoundError(f"Registry file not found: {registry_path}")
                 
             with open(registry_path, 'r') as f:
                 registry = json.load(f)
@@ -165,8 +164,7 @@ class ProductionPredictionService:
             
             # Load model weights with optimized settings
             if not self.model_path.exists():
-                print(f"❌ Model file not found: {self.model_path}")
-                return False
+                raise FileNotFoundError(f"Model file not found: {self.model_path}")
             
             # Use weights_only=True for faster loading and security
             # Use map_location to avoid GPU memory issues
@@ -223,7 +221,8 @@ class ProductionPredictionService:
             print(f"❌ Error loading model: {e}")
             import traceback
             traceback.print_exc()
-            return False
+            # Raise exception instead of returning False to ensure startup knows it failed
+            raise RuntimeError(f"Failed to load model: {e}") from e
     
     def _normalize_features(self, features: np.ndarray) -> np.ndarray:
         """Normalize features using the loaded scaler."""
