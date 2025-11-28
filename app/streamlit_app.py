@@ -379,12 +379,12 @@ def render_predict_tab():
             try:
                 # Load audio file with very limited duration for fast processing (2 seconds max)
                 max_duration = 2.0  # Reduced from 5 seconds for faster loading
+                # Use default resampling (no resampy dependency needed)
                 y, sr = librosa.load(
                     tmp_path, 
                     sr=16000, 
                     duration=max_duration, 
-                    mono=True,
-                    res_type='kaiser_fast'  # Fast resampling like in prediction
+                    mono=True
                 )
                 
                 if len(y) == 0:
